@@ -1,67 +1,62 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, TouchableOpacity, Button, Animated, Text } from 'react-native';
-import { AppLoading } from 'expo';
+import { Animated, Button, StyleSheet, Text, View } from 'react-native';
+
+const SNAPSHOT_COUNT = 50;
+const ORBIT_RADIUS = 100;
+const ANIMATION_DURATION = 1000;
+
+const inputRange = Array.from(
+  { length: SNAPSHOT_COUNT + 1 },
+  (_, index) => index / SNAPSHOT_COUNT
+);
+
+function createOrbitInterpolation(animatedValue, coordinate) {
+  const outputRange = inputRange.map(value =>
+    coordinate === 'x'
+      ? Math.sin(value * Math.PI * 2) * ORBIT_RADIUS
+      : -Math.cos(value * Math.PI * 2) * ORBIT_RADIUS
+  );
+
+  return animatedValue.interpolate({ inputRange, outputRange });
+}
 
 export default class App extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+
     this.animated = new Animated.Value(0);
-
-    var range = 1,
-      snapshot = 50,
-      radius = 100;
-    /// translateX
-    var inputRange = [],
-      outputRange = [];
-    for (var i = 0; i <= snapshot; ++i) {
-      var value = i / snapshot;
-      var move = Math.sin(value * Math.PI * 2) * radius;
-      inputRange.push(value);
-      outputRange.push(move);
-    }
-    this.translateX = this.animated.interpolate({ inputRange, outputRange });
-
-    /// translateY
-    var inputRange = [],
-      outputRange = [];
-    for (var i = 0; i <= snapshot; ++i) {
-      var value = i / snapshot;
-      var move = -Math.cos(value * Math.PI * 2) * radius;
-      inputRange.push(value);
-      outputRange.push(move);
-    }
-    this.translateY = this.animated.interpolate({ inputRange, outputRange });
+    this.animate = this.animate.bind(this);
+    this.translateX = createOrbitInterpolation(this.animated, 'x');
+    this.translateY = createOrbitInterpolation(this.animated, 'y');
   }
 
   animate() {
     this.animated.setValue(0);
     Animated.timing(this.animated, {
       toValue: 1,
-      duration: 1000,
+      duration: ANIMATION_DURATION,
     }).start();
   }
 
   render() {
-    const transform = [{ translateY: this.translateY }, { translateX: this.translateX }];
+    const transform = [
+      { translateY: this.translateY },
+      { translateX: this.translateX },
+    ];
+
     return (
       <View style={styles.container}>
-        <Animated.View style={[{ transform }]}>
-          <TouchableOpacity style={styles.btn}>
+        <Animated.View style={{ transform }}>
+          <View style={styles.btn}>
             <Text>hallo</Text>
-          </TouchableOpacity>
+          </View>
         </Animated.View>
-        <Button
-          title='Test'
-          onPress={() => {
-            this.animate();
-          }}
-        />
+        <Button title="Test" onPress={this.animate} />
       </View>
     );
   }
 }
 
-// define your styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
